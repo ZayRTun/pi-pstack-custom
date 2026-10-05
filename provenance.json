@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "package": "@zayar/pi-pstack",
+  "original": {
+    "repository": "https://github.com/cursor/plugins",
+    "subtree": "pstack",
+    "commit": "e43c7ee26e0038c6c1fa8380dd34ce86ff94cb2a",
+    "version": "0.15.9"
+  },
+  "originalBase": {
+    "commit": "53e579f1481697931fc44f5445171397cfa2b24b",
+    "version": "0.15.2"
+  },
+  "historicalPiPort": {
+    "repository": "https://github.com/casualjim/pi-mimir",
+    "commit": "577aa5571817c0096f243fe1b02cc5adf147f0ab",
+    "packageVersion": "0.1.10",
+    "note": "Historical lineage only. This is where the Pi port came from, never an update source."
+  },
+  "exclusions": [
+    { "path": ".cursor-plugin/", "reason": "Cursor plugin manifest, not loaded by Pi" },
+    { "path": "assets/", "reason": "plugin assets and logos, not loaded by Pi" },
+    { "path": "automations/", "reason": "Cursor automation pack, not portable to Pi skills" },
+    { "path": "docs/", "reason": "upstream marketplace guide, outside skill and agent scope" },
+    { "path": "skills/setup-pstack/", "reason": "writes Cursor model rules; this package has no equivalent" },
+    { "path": "skills/make-bot-ui/", "reason": "Cursor webhook UI harness; excluded by prior decision" }
+  ],
+  "skillNameMappings": {
+    "tdd": "pstack-tdd",
+    "teach": "pstack-teach"
+  }
+}
