@@ -6,6 +6,8 @@ This package provides pstack skills, sticky Poteto Mode, shell-command confirmat
 
 Load this package through Pi's package settings. Run `/poteto-mode` to enable the style for the session, or `/poteto-mode off` to disable it. Skills and commands load without a delegation provider. Workflows that need independent delegates still require that optional capability.
 
+Ask `/skill:poteto-help` how to install, use, or extend pstack, or which skill fits a situation. It answers with the file the answer came from and an example prompt to send, and it stays out of the work itself. It is the one bundled skill eligible for model discovery, so a question about using pstack can reach it. Eligibility is not a guarantee that the model invokes it, and typing `/skill:poteto-help` always works.
+
 Poteto Mode reports whether delegation and task tracking are available. Without task tracking, use an explicitly non-persisted in-chat checklist. Without delegation, perform authorized single-agent work when independent results are not required. Swarms and independent reviews must report that they are blocked rather than fabricate independent workers.
 
 Only one pstack package should be active. This checkout is not published. See [personal maintenance instructions](FORK.md) for the manual integration process and the check commands.
@@ -34,4 +36,4 @@ Agent instructions do not enforce filesystem isolation. Available capabilities d
 
 Derived from Cursor's pstack, under MIT. Original license and attribution remain in [LICENSE](LICENSE). This standalone repository lives at `https://github.com/ZayRTun/pi-pstack-custom`.
 
-`provenance.json` records the pin: `https://github.com/cursor/plugins`, subtree `pstack`, commit `e43c7ee26e0038c6c1fa8380dd34ce86ff94cb2a`, version `0.15.9`. The first Pi port came from `casualjim/pi-mimir` at `577aa5571817c0096f243fe1b02cc5adf147f0ab`; that lineage is historical, and the original repository is the update source. This package's own version is separate from the original's. Run `npm run check:upstream` to diff the pinned subtree against the latest original commit without writing to the checkout.
+`provenance.json` records the pin: `https://github.com/cursor/plugins`, subtree `pstack`, commit `4e5b1cf2ccb0ea3716f08c8ee0a5856b5ab93536`, version `0.15.10`. The first Pi port came from `casualjim/pi-mimir` at `577aa5571817c0096f243fe1b02cc5adf147f0ab`; that lineage is historical, and the original repository is the update source. This package's own version is separate from the original's. Run `npm run check:upstream` to diff the pinned subtree against the latest original commit without writing to the checkout.

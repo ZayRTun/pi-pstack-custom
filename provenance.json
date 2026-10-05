@@ -4,12 +4,12 @@
   "original": {
     "repository": "https://github.com/cursor/plugins",
     "subtree": "pstack",
-    "commit": "e43c7ee26e0038c6c1fa8380dd34ce86ff94cb2a",
-    "version": "0.15.9"
+    "commit": "4e5b1cf2ccb0ea3716f08c8ee0a5856b5ab93536",
+    "version": "0.15.10"
   },
   "originalBase": {
-    "commit": "53e579f1481697931fc44f5445171397cfa2b24b",
-    "version": "0.15.2"
+    "commit": "e43c7ee26e0038c6c1fa8380dd34ce86ff94cb2a",
+    "version": "0.15.9"
   },
   "historicalPiPort": {
     "repository": "https://github.com/casualjim/pi-mimir",

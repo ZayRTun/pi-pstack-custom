@@ -25,6 +25,8 @@ const PROVENANCE = JSON.parse(
   (await import("node:fs")).readFileSync(join(dirname(scriptsDir), "provenance.json"), "utf8"),
 );
 const PINNED_COMMIT = PROVENANCE.original.commit;
+const PINNED_VERSION = PROVENANCE.original.version;
+const NEXT_VERSION = "0.15.11";
 
 function writePlugin(dir, version, files) {
   mkdirSync(join(dir, "pstack", ".cursor-plugin"), { recursive: true });
@@ -62,7 +64,7 @@ function capture() {
 test("offline mode reports the literal delta with mapped and excluded paths", async (t) => {
   const pinned = fixture(
     t,
-    "0.15.9",
+    PINNED_VERSION,
     {
       "skills/architect/SKILL.md": "original architect\n",
       "skills/tdd/SKILL.md": "original tdd\n",
@@ -74,7 +76,7 @@ test("offline mode reports the literal delta with mapped and excluded paths", as
   );
   const candidate = fixture(
     t,
-    "0.15.10",
+    NEXT_VERSION,
     {
       "skills/architect/SKILL.md": "changed architect\n",
       "skills/benchmark-checklist/SKILL.md": "added skill\n",
@@ -105,8 +107,8 @@ test("offline mode reports the literal delta with mapped and excluded paths", as
 });
 
 test("the report names the excluded paths with their recorded reason", async (t) => {
-  const pinned = fixture(t, "0.15.9", { "skills/setup-pstack/SKILL.md": "a\n" }, PINNED_COMMIT);
-  const candidate = fixture(t, "0.15.10", { "skills/setup-pstack/SKILL.md": "b\n" }, "2222222222222222222222222222222222222222");
+  const pinned = fixture(t, PINNED_VERSION, { "skills/setup-pstack/SKILL.md": "a\n" }, PINNED_COMMIT);
+  const candidate = fixture(t, NEXT_VERSION, { "skills/setup-pstack/SKILL.md": "b\n" }, "2222222222222222222222222222222222222222");
   const { lines, log } = capture();
   await main(["--pinned", pinned, "--candidate", candidate, "--pinned-commit", PINNED_COMMIT, "--candidate-commit", "2222222222222222222222222222222222222222"], { log });
   assert.match(lines.join("\n"), /modified skills\/setup-pstack\/SKILL\.md \(excluded: writes Cursor model rules; this package has no equivalent\)/);
@@ -114,18 +116,18 @@ test("the report names the excluded paths with their recorded reason", async (t)
 });
 
 test("the same version at a different commit is reported as drift and fails the check", async (t) => {
-  const pinned = fixture(t, "0.15.9", { "skills/arena/SKILL.md": "a\n" }, PINNED_COMMIT);
-  const candidate = fixture(t, "0.15.9", { "skills/arena/SKILL.md": "b\n" }, "3333333333333333333333333333333333333333");
+  const pinned = fixture(t, PINNED_VERSION, { "skills/arena/SKILL.md": "a\n" }, PINNED_COMMIT);
+  const candidate = fixture(t, PINNED_VERSION, { "skills/arena/SKILL.md": "b\n" }, "3333333333333333333333333333333333333333");
   const { lines, log } = capture();
   const code = await main(["--pinned", pinned, "--candidate", candidate, "--pinned-commit", PINNED_COMMIT, "--candidate-commit", "3333333333333333333333333333333333333333"], { log });
   assert.equal(code, 1);
-  assert.match(lines.join("\n"), /DRIFT: version 0\.15\.9 now points at commit 3333333333333333333333333333333333333333\./);
-  assert.equal(detectDrift({ pinned: { version: "0.15.9", commit: PINNED_COMMIT }, candidate: { version: "0.15.9", commit: PINNED_COMMIT } }).sameVersionDifferentCommit, false);
+  assert.match(lines.join("\n"), new RegExp(`DRIFT: version ${PINNED_VERSION.replace(/\./g, "\\.")} now points at commit 3333333333333333333333333333333333333333\\.`));
+  assert.equal(detectDrift({ pinned: { version: PINNED_VERSION, commit: PINNED_COMMIT }, candidate: { version: PINNED_VERSION, commit: PINNED_COMMIT } }).sameVersionDifferentCommit, false);
 });
 
 test("a pinned directory that is not the recorded version fails loudly", (t) => {
   const dir = fixture(t, "0.15.3", { "skills/arena/SKILL.md": "a\n" });
-  assert.throws(() => localSource({ dir, subtree: "pstack", expectedVersion: "0.15.9" }), /holds pstack 0\.15\.3, not the pinned 0\.15\.9/);
+  assert.throws(() => localSource({ dir, subtree: "pstack", expectedVersion: PINNED_VERSION }), /holds pstack 0\.15\.3, not the pinned 0\.15\.10/);
 });
 
 test("provenance parsing rejects a non-immutable or incomplete record", () => {
@@ -151,12 +153,12 @@ test("online resolution reads the original repository subtree and never the hist
         ],
       }),
     }],
-    ["plugin.json", { ok: true, status: 200, text: async () => JSON.stringify({ version: "0.15.10" }) }],
+    ["plugin.json", { ok: true, status: 200, text: async () => JSON.stringify({ version: NEXT_VERSION }) }],
   ]);
   const commit = await resolveLatestCommit({ repository: PROVENANCE.original.repository, subtree: "pstack", fetchImpl });
   assert.equal(commit, "4444444444444444444444444444444444444444");
   const source = await remoteSource({ repository: PROVENANCE.original.repository, subtree: "pstack", commit, fetchImpl });
-  assert.equal(source.version, "0.15.10");
+  assert.equal(source.version, NEXT_VERSION);
   assert.deepEqual([...source.inventory], [["skills/architect/SKILL.md", "aaa"]]);
   assert.match(urls[0], /^https:\/\/api\.github\.com\/repos\/cursor\/plugins\/commits\?path=pstack&per_page=1$/);
   assert.match(urls[1], /\/git\/trees\/4444444444444444444444444444444444444444:pstack\?recursive=1$/);
@@ -186,8 +188,8 @@ test("a truncated tree and an HTTP failure each fail clearly", async () => {
 });
 
 test("offline mode never calls the network", async (t) => {
-  const pinned = fixture(t, "0.15.9", { "skills/why/SKILL.md": "a\n" }, PINNED_COMMIT);
-  const candidate = fixture(t, "0.15.9", { "skills/why/SKILL.md": "a\n" }, PINNED_COMMIT);
+  const pinned = fixture(t, PINNED_VERSION, { "skills/why/SKILL.md": "a\n" }, PINNED_COMMIT);
+  const candidate = fixture(t, PINNED_VERSION, { "skills/why/SKILL.md": "a\n" }, PINNED_COMMIT);
   let calls = 0;
   const { lines, log } = capture();
   const code = await main(["--pinned", pinned, "--candidate", candidate, "--pinned-commit", PINNED_COMMIT, "--candidate-commit", PINNED_COMMIT], { log, fetchImpl: async () => { calls += 1; throw new Error("network used"); } });
@@ -199,40 +201,40 @@ test("offline mode never calls the network", async (t) => {
 // Git blob object ids for the fixed fixture contents, computed with `git hash-object --stdin`.
 const SHA_A = "78981922613b2afb6025042ff6bd878ac1994e85";
 const SHA_B = "61780798228d17af2d34fce4cfbdf35556832472";
-const SHA_PLUGIN_0159 = "b31563da06e28c7d8bb8f53a56c22056709e5575";
+const SHA_PLUGIN_PINNED = "a0e343bdd727192fdf8806635ed60c309258bdcb";
 
 function remoteInventory(arenaSha) {
   return inventoryFromTree(
     [
       { type: "blob", path: "skills/arena/SKILL.md", sha: arenaSha },
-      { type: "blob", path: ".cursor-plugin/plugin.json", sha: SHA_PLUGIN_0159 },
+      { type: "blob", path: ".cursor-plugin/plugin.json", sha: SHA_PLUGIN_PINNED },
     ],
     "pstack",
   );
 }
 
 test("a local pin compared against a remote candidate reports unchanged content as zero delta", async (t) => {
-  const dir = fixture(t, "0.15.9", { "skills/arena/SKILL.md": "a\n" }, PINNED_COMMIT);
+  const dir = fixture(t, PINNED_VERSION, { "skills/arena/SKILL.md": "a\n" }, PINNED_COMMIT);
   const pinned = localSource({ dir, subtree: "pstack", commit: PINNED_COMMIT });
   assert.equal(pinned.inventory.get("skills/arena/SKILL.md"), SHA_A);
-  const candidate = { origin: "remote", commit: "6666666666666666666666666666666666666666", version: "0.15.9", inventory: remoteInventory(SHA_A) };
+  const candidate = { origin: "remote", commit: "6666666666666666666666666666666666666666", version: PINNED_VERSION, inventory: remoteInventory(SHA_A) };
   assert.deepEqual(compareInventories(pinned.inventory, candidate.inventory), []);
   const report = await checkUpstream({ provenance: PROVENANCE, pinned, candidate });
   assert.deepEqual(report.counts, { added: 0, removed: 0, modified: 0, unchanged: 2 });
 });
 
 test("a remote pin compared against a local candidate reports unchanged content as zero delta", async (t) => {
-  const dir = fixture(t, "0.15.9", { "skills/arena/SKILL.md": "a\n" }, PINNED_COMMIT);
+  const dir = fixture(t, PINNED_VERSION, { "skills/arena/SKILL.md": "a\n" }, PINNED_COMMIT);
   const candidate = localSource({ dir, subtree: "pstack", commit: "7777777777777777777777777777777777777777" });
   assert.equal(candidate.inventory.get("skills/arena/SKILL.md"), SHA_A);
-  const pinned = { origin: "remote", commit: PINNED_COMMIT, version: "0.15.9", inventory: remoteInventory(SHA_A) };
+  const pinned = { origin: "remote", commit: PINNED_COMMIT, version: PINNED_VERSION, inventory: remoteInventory(SHA_A) };
   assert.deepEqual(compareInventories(pinned.inventory, candidate.inventory), []);
   const report = await checkUpstream({ provenance: PROVENANCE, pinned, candidate });
   assert.deepEqual(report.counts, { added: 0, removed: 0, modified: 0, unchanged: 2 });
 });
 
 test("mixed local and remote hashing recognizes changed content in both directions", async (t) => {
-  const dir = fixture(t, "0.15.9", { "skills/arena/SKILL.md": "a\n" }, PINNED_COMMIT);
+  const dir = fixture(t, PINNED_VERSION, { "skills/arena/SKILL.md": "a\n" }, PINNED_COMMIT);
   const local = localSource({ dir, subtree: "pstack", commit: PINNED_COMMIT }).inventory;
   const remote = remoteInventory(SHA_B);
   assert.deepEqual(compareInventories(local, remote), [
@@ -244,7 +246,7 @@ test("mixed local and remote hashing recognizes changed content in both directio
 });
 
 test("an explicit sha256 inventory keeps its prefix and refuses a cross-mode compare", async (t) => {
-  const dir = fixture(t, "0.15.9", { "skills/arena/SKILL.md": "a\n" }, PINNED_COMMIT);
+  const dir = fixture(t, PINNED_VERSION, { "skills/arena/SKILL.md": "a\n" }, PINNED_COMMIT);
   const sha256 = inventoryFromDirectory(dir, "pstack", "sha256");
   assert.equal(sha256.mode, "sha256");
   assert.match(sha256.get("skills/arena/SKILL.md"), /^sha256:[0-9a-f]{64}$/);
@@ -254,8 +256,8 @@ test("an explicit sha256 inventory keeps its prefix and refuses a cross-mode com
 });
 
 test("the JSON report is a plain serializable record", async (t) => {
-  const pinned = fixture(t, "0.15.9", { "skills/arena/SKILL.md": "a\n" }, PINNED_COMMIT);
-  const candidate = fixture(t, "0.15.10", { "skills/arena/SKILL.md": "a\n" }, "5555555555555555555555555555555555555555");
+  const pinned = fixture(t, PINNED_VERSION, { "skills/arena/SKILL.md": "a\n" }, PINNED_COMMIT);
+  const candidate = fixture(t, NEXT_VERSION, { "skills/arena/SKILL.md": "a\n" }, "5555555555555555555555555555555555555555");
   const report = await checkUpstream({
     provenance: PROVENANCE,
     pinned: localSource({ dir: pinned, subtree: "pstack", commit: PINNED_COMMIT }),
@@ -266,7 +268,7 @@ test("the JSON report is a plain serializable record", async (t) => {
     report.changes.map((change) => [change.kind, change.path, change.policy]),
     [["modified", ".cursor-plugin/plugin.json", "excluded"]],
   );
-  assert.match(formatReport(report), /candidate original: 0\.15\.10 5555555555555555555555555555555555555555/);
+  assert.match(formatReport(report), new RegExp(`candidate original: ${NEXT_VERSION.replace(/\./g, "\\.")} 5555555555555555555555555555555555555555`));
   assert.deepEqual(parseArgs(["--pinned", "/a", "--candidate", "/b", "--json"]), { json: true, pinned: "/a", candidate: "/b" });
   assert.throws(() => parseArgs(["--nope"]), /unknown argument --nope/);
 });

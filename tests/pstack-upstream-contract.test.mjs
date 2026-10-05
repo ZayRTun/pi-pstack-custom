@@ -42,12 +42,12 @@ test("provenance pins the imported original, its base, and the historical port",
   assert.deepEqual(provenance.original, {
     repository: "https://github.com/cursor/plugins",
     subtree: "pstack",
-    commit: "e43c7ee26e0038c6c1fa8380dd34ce86ff94cb2a",
-    version: "0.15.9",
+    commit: "4e5b1cf2ccb0ea3716f08c8ee0a5856b5ab93536",
+    version: "0.15.10",
   });
   assert.deepEqual(provenance.originalBase, {
-    commit: "53e579f1481697931fc44f5445171397cfa2b24b",
-    version: "0.15.2",
+    commit: "e43c7ee26e0038c6c1fa8380dd34ce86ff94cb2a",
+    version: "0.15.9",
   });
   assert.equal(provenance.historicalPiPort.repository, "https://github.com/casualjim/pi-mimir");
   assert.equal(provenance.historicalPiPort.commit, "577aa5571817c0096f243fe1b02cc5adf147f0ab");
@@ -72,11 +72,12 @@ test("renamed original skills map onto their namespaced local directories", () =
 });
 
 test("every skill loads with a matching frontmatter name and a description", () => {
-  assert.equal(skillDirs.length, 48);
+  assert.equal(skillDirs.length, 49);
   for (const dir of skillDirs) {
     const fields = frontmatter(join(skillsDir, dir, "SKILL.md"));
     assert.equal(fields.name, dir, `${dir}/SKILL.md name`);
     assert.ok(fields.description?.length > 20, `${dir} needs a usable description`);
+    if (dir === "poteto-help") continue;
     assert.equal(fields["disable-model-invocation"], "true", `${dir} is user-invoked`);
   }
 });
@@ -101,6 +102,11 @@ test("the skills added in 0.15.9 load and the fork points at them", () => {
     /\[Explain the Number\]\(\.\.\/principle-explain-the-number\/SKILL\.md\)/,
   );
   assert.match(frontmatter(join(skillsDir, "correct", "SKILL.md")).description, /Use for \/correct\./);
+});
+
+test("the skill added in 0.15.10 loads and the README points at it", () => {
+  assert.equal(frontmatter(join(skillsDir, "poteto-help", "SKILL.md")).name, "poteto-help");
+  assert.match(readFileSync(join(pkgRoot, "README.md"), "utf8"), /`\/skill:poteto-help`/);
 });
 
 test("poteto-mode indexes every principle skill in this package", () => {

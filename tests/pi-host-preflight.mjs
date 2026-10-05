@@ -75,6 +75,13 @@ async function runCase(name, withPstack, withDurable) {
   assert.equal(loader.getExtensions().extensions.length, extensions.length, 'isolated extension ownership');
   assert.deepEqual(loader.getSkills().diagnostics.filter(d => d.type === 'collision'), []);
   if (withPstack) for (const name of ['pstack-tdd', 'pstack-teach', 'poteto-mode']) assert.equal(loader.getSkills().skills.filter(s => s.name === name).length, 1);
+  if (withPstack) {
+    const help = loader.getSkills().skills.filter(s => s.name === 'poteto-help');
+    assert.equal(help.length, 1, 'the added help skill loads once');
+    assert.equal(help[0].disableModelInvocation, false, 'help stays model-invocable');
+    assert.equal(help[0].filePath, join(fork, 'skills', 'poteto-help', 'SKILL.md'));
+    assert.equal(help[0].baseDir, join(fork, 'skills', 'poteto-help'));
+  }
   const manager = SessionManager.create(directory, join(directory, 'sessions'));
   if (withPstack) manager.appendCustomEntry('pstack-mode', { enabled: true });
   const { session } = await createAgentSession({ cwd: directory, agentDir, modelRuntime: runtime, model: faux.getModel(), settingsManager: settings, resourceLoader: loader, sessionManager: manager, thinkingLevel: 'off' });
@@ -87,6 +94,7 @@ async function runCase(name, withPstack, withDurable) {
       if (withPstack) {
         assert.ok(input.includes('Pstack Poteto Mode is enabled for this session.'));
         assert.ok(input.includes(fork + '/skills/poteto-mode/SKILL.md'));
+        assert.ok(input.includes('poteto-help'), 'the help skill is advertised to the model');
         assert.ok(input.includes('Task tracking is unavailable'));
         assert.ok(input.includes(withDurable ? 'A Sub-agent tool is available' : 'No compatible Sub-agent tool is available'));
       } else assert.ok(!input.includes('Pstack Poteto Mode is enabled for this session.'));
@@ -130,7 +138,7 @@ async function runCase(name, withPstack, withDurable) {
       assert.equal(delegated.agent.tools.includes('subagent'), false);
       assert.deepEqual((delegated.activityLog ?? []).map(call => call.name), withPstack ? ['read', 'read'] : []);
     }
-    proofs.push({ name, extensionPaths: loader.getExtensions().extensions.map(e => e.path), providerCalls: faux.state.callCount, paidProviderCalls: 0, delegated: delegated && { status: delegated.status, output: delegated.output, definitionPath: delegated.agent.definitionPath, unavailable: delegated.unavailable, activity: delegated.activityLog } });
+    proofs.push({ name, extensionPaths: loader.getExtensions().extensions.map(e => e.path), skillFiles: withPstack ? Object.fromEntries(loader.getSkills().skills.filter(s => ['poteto-help', 'poteto-mode', 'pstack-tdd', 'pstack-teach'].includes(s.name)).map(s => [s.name, s.filePath])) : undefined, providerCalls: faux.state.callCount, paidProviderCalls: 0, delegated: delegated && { status: delegated.status, output: delegated.output, definitionPath: delegated.agent.definitionPath, unavailable: delegated.unavailable, activity: delegated.activityLog } });
     console.log(`PASS: ${name}`);
   } finally { session.dispose(); }
 }

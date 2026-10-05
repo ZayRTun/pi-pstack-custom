@@ -31,6 +31,8 @@ A compatible Sub-agent provider is optional. Its execution semantics come from i
 
 This package ships the original pstack skills under `/pstack-tdd` and `/pstack-teach`. Separate skills, such as Matt Pocock's `/tdd` and `/teach`, can retain their names when both sets are installed. The namespace avoids collisions without changing those separately installed skills.
 
+`poteto-help` is the only model-invocable skill, because a question about using pstack should be able to reach it without a command. Discovery is not a guarantee, so `/skill:poteto-help` is always available. Every other bundled skill sets `disable-model-invocation: true`, which hides its description from the model and leaves that skill user-invoked; the flag does not stop an agent from reading the skill file when a playbook names it. `tests/poteto-help-contract.test.mjs` holds that split.
+
 ## Keep one active pstack package
 
 Load one pstack package at a time, either this checkout or another, never both, because two copies of the same skill names collide. If the checkout moves, update the local package entry and any optional definition-directory entry together. The packaged Agent contains no machine-specific checkout path.
@@ -42,11 +44,11 @@ This package integrates directly from Cursor's pstack. The update source is `htt
 | Record | Value |
 |:---|:---|
 | Original repository | `https://github.com/cursor/plugins`, subtree `pstack` |
-| Imported original | `e43c7ee26e0038c6c1fa8380dd34ce86ff94cb2a`, version `0.15.9` |
-| Imported-from base | `53e579f1481697931fc44f5445171397cfa2b24b`, version `0.15.2` |
+| Imported original | `4e5b1cf2ccb0ea3716f08c8ee0a5856b5ab93536`, version `0.15.10` |
+| Imported-from base | `e43c7ee26e0038c6c1fa8380dd34ce86ff94cb2a`, version `0.15.9` |
 | Historical Pi port | `casualjim/pi-mimir` at `577aa5571817c0096f243fe1b02cc5adf147f0ab`, package `0.1.10` |
 
-`casualjim/pi-mimir` is historical lineage. That port is where this package's Pi adaptations came from, and it is never an update source again. Do not add a git remote that points at it for updates. The fork's own package version (`0.1.10`) is separate from the original's version (`0.15.9`) and does not track it.
+`casualjim/pi-mimir` is historical lineage. That port is where this package's Pi adaptations came from, and it is never an update source again. Do not add a git remote that points at it for updates. The fork's own package version (`0.1.10`) is separate from the original's version (`0.15.10`) and does not track it.
 
 Integration is manual and reviewed. Nothing here merges, rebases, or copies a tree for you, and `pi update --extensions` does not synchronize this checkout with either repository.
 
@@ -72,7 +74,7 @@ PI_OFFLINE=1 node --experimental-strip-types tests/pi-host-preflight.mjs
 PI_OFFLINE=1 PI_DURABLE_EXTENSION="<path to a compatible Sub-agent extension entry point>" node --experimental-strip-types tests/pi-host-preflight.mjs
 ```
 
-`npm test` runs `bun tests/agents-contract.ts`, then `bun test`. `bun test` covers `tests/skill-names.test.mjs`, `tests/pstack-upstream-contract.test.mjs`, `tests/check-upstream.test.mjs`, `tests/package-resource-resolution.test.mjs`, `extensions/pstack/capabilities.test.ts`, and the poteto-mode tool tests under `skills/poteto-mode/scripts/`. A first run auto-installs the tool dependencies; the explicit `bun install --frozen-lockfile` above makes that install deterministic. `node --test tests/*.test.mjs` runs the portable `.mjs` tests under Node's own runner.
+`npm test` runs `bun tests/agents-contract.ts`, then `bun test`. `bun test` covers `tests/skill-names.test.mjs`, `tests/pstack-upstream-contract.test.mjs`, `tests/poteto-help-contract.test.mjs`, `tests/check-upstream.test.mjs`, `tests/package-resource-resolution.test.mjs`, `extensions/pstack/capabilities.test.ts`, and the poteto-mode tool tests under `skills/poteto-mode/scripts/`. A first run auto-installs the tool dependencies; the explicit `bun install --frozen-lockfile` above makes that install deterministic. `node --test tests/*.test.mjs` runs the portable `.mjs` tests under Node's own runner.
 
 `check:upstream` exits `0` when it produced a report and `1` when the pinned version now points at a different commit, which means the pin is stale or its history was rewritten. A report with in-scope changes still exits `0`: changes need review, not failure.
 
